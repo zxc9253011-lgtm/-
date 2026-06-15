@@ -1,0 +1,1845 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 頝郊憪踵???蝟餌絞 | RunAnalyzer</title>
+    <style>
+:root {
+    --bg-color: #0f172a;
+    --surface-color: #1e293b;
+    --surface-light: #334155;
+    --primary-color: #3b82f6;
+    --primary-glow: rgba(59, 130, 246, 0.5);
+    --secondary-color: #10b981;
+    --accent-color: #8b5cf6;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    
+    --border-radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+}
+
+.app-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Header */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.logo h1 {
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.logo span {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* View Switcher */
+.view-switcher {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-light);
+    padding: 4px;
+    border-radius: 12px;
+}
+
+.view-switcher .label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-left: 8px;
+}
+
+.view-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.view-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.view-btn.active {
+    background: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Main Content */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Video Section */
+.video-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#source-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+}
+
+#output-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    display: none;
+}
+
+.upload-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(30, 41, 59, 0.8);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.upload-placeholder:hover {
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.upload-placeholder .upload-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--primary-color);
+    margin-bottom: 16px;
+    transition: transform 0.3s ease;
+}
+
+.upload-placeholder:hover .upload-icon {
+    transform: translateY(-5px);
+}
+
+.upload-placeholder p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+#video-upload {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Controls Panel */
+.controls-panel {
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.control-btn {
+    background: var(--surface-light);
+    border: none;
+    color: var(--text-main);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.control-btn:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.play-btn {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-color);
+    box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.play-btn:not(:disabled):hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+}
+
+.speed-control {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.speed-control label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.speed-control select {
+    background: var(--surface-light);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 8px;
+    outline: none;
+    font-family: inherit;
+}
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+#video-progress {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    background: var(--surface-light);
+    border-radius: 3px;
+    outline: none;
+}
+
+#video-progress::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+#video-progress:not(:disabled)::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+}
+
+.time-display {
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    min-width: 100px;
+    text-align: right;
+}
+
+/* Analysis Section */
+.analysis-section {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 16px;
+}
+
+.panel-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.action-btn {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--surface-light);
+    box-shadow: none;
+}
+
+.action-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.metric-card {
+    background: var(--surface-color);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 4px solid var(--primary-color);
+    transition: var(--transition);
+}
+
+.metric-card:hover {
+    background: var(--surface-light);
+    transform: translateX(4px);
+}
+
+.metric-card.warning {
+    border-left-color: var(--warning-color);
+}
+
+.metric-card.danger {
+    border-left-color: var(--danger-color);
+}
+
+.metric-card.success {
+    border-left-color: var(--secondary-color);
+}
+
+.metric-card.placeholder {
+    border-left-color: transparent;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 32px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.metric-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.metric-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.metric-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.metric-bar-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 3px;
+    transition: width 0.1s ease-out;
+}
+
+.warning .metric-bar-fill { background: var(--warning-color); }
+.danger .metric-bar-fill { background: var(--danger-color); }
+.success .metric-bar-fill { background: var(--secondary-color); }
+
+/* Report Container */
+.report-container {
+    margin-top: auto;
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.report-container h3 {
+    font-size: 1.1rem;
+    color: var(--secondary-color);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.report-content ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.report-content li {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.report-content li::before {
+    content: "??;
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+.report-content li.issue-warning::before { color: var(--warning-color); }
+.report-content li.issue-danger::before { color: var(--danger-color); }
+
+.phase-badge {
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-weight: 600;
+    display: inline-block;
+    width: fit-content;
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.phase-badge.flight {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.phase-badge.stance-left {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.phase-badge.stance-right {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+</style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- MediaPipe Pose -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <h1>RunAnalyzer <span>AI</span></h1>
+            </div>
+            <div class="view-switcher">
+                <span class="label">??閬?嚗?/span>
+                <button id="btn-front-view" class="view-btn active">甇? (Front)</button>
+                <button id="btn-side-view" class="view-btn">?湧 (Side)</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="video-section">
+                <div class="video-container">
+                    <div id="upload-placeholder" class="upload-placeholder">
+                        <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p>暺????喃??唾?甇亙蔣??(MP4, MOV)</p>
+                        <input type="file" id="video-upload" accept="video/*" />
+                    </div>
+
+                    <video id="source-video" playsinline muted></video>
+                    <canvas id="output-canvas"></canvas>
+
+                    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>AI 璅∪?頛???葉...</p>
+                    </div>
+                </div>
+
+                <div class="controls-panel">
+                    <div class="playback-controls">
+                        <button id="btn-play-pause" class="control-btn play-btn" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="icon">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </button>
+                        <button id="btn-prev-frame" class="control-btn" title="銝?撟" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="icon">
+                                <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" />
+                            </svg>
+                        </button>
+                        <button id="btn-next-frame" class="control-btn" title="銝?撟" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="icon">
+                                <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z" />
+                            </svg>
+                        </button>
+                        <div class="speed-control">
+                            <label for="playback-speed">?剜?漲</label>
+                            <select id="playback-speed" disabled>
+                                <option value="1.0">1.0x (甇?虜)</option>
+                                <option value="0.5">0.5x (?Ｗ?雿?</option>
+                                <option value="0.25">0.25x (璆菜)</option>
+                                <option value="0.1">0.1x (????)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-control"
+                        style="display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label for="ground-offset" style="color: var(--text-muted); font-size: 0.9rem;">??隤踵?唳蝺?</label>
+                        <input type="range" id="ground-offset" min="0" max="1" value="0.85" step="0.005"
+                            style="flex: 1; cursor: pointer;">
+                        <span id="ground-offset-val"
+                            style="color: var(--primary); font-family: monospace; width: 45px; text-align: right;">85%</span>
+                    </div>
+                    <div class="progress-container">
+                        <input type="range" id="video-progress" min="0" max="100" value="0" disabled>
+                        <div class="time-display">
+                            <span id="current-time">00:00.00</span> / <span id="duration">00:00.00</span>
+                        </div>
+                    </div>
+                    <div class="canvas-tools"
+                        style="display: flex; gap: 8px; margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; flex-wrap: wrap;">
+                        <span
+                            style="color: var(--text-muted); font-size: 0.9rem; margin-right: 4px; align-self: center;">??璅酉?葫??</span>
+                        <button id="btn-tool-none" class="action-btn active"
+                            style="padding: 4px 10px; font-size: 0.8rem;">??/button>
+                        <button id="btn-tool-angle" class="action-btn"
+                            style="padding: 4px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.1);">????                            (3暺?</button>
+                        <button id="btn-tool-plumb" class="action-btn"
+                            style="padding: 4px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.1);">?賢?蝺?                            (1暺?</button>
+                        <button id="btn-tool-calibrate" class="action-btn"
+                            style="padding: 4px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid var(--primary);">蝛粹??⊥迤
+                            (2暺?</button>
+                        <button id="btn-tool-measure" class="action-btn"
+                            style="padding: 4px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.1);">皜祇?頝
+                            (2暺?</button>
+                        <button id="btn-tool-clear" class="action-btn"
+                            style="padding: 4px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.1); margin-left: auto;">皜璅酉</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="analysis-section">
+                <div class="panel-header">
+                    <div class="header-titles" style="display: flex; flex-direction: column; gap: 6px;">
+                        <h2 style="margin: 0;">?單????豢?</h2>
+                        <div id="gait-phase-badge" class="phase-badge">蝑?敶梁?...</div>
+                    </div>
+                    <div class="header-actions" style="display: flex; gap: 8px;">
+                        <button id="btn-export-csv" class="action-btn"
+                            style="background: rgba(255, 255, 255, 0.1); box-shadow: none;" disabled>?臬 CSV</button>
+                        <button id="btn-generate-report" class="action-btn" disabled>?Ｙ?摰?勗?</button>
+                    </div>
+                </div>
+
+                <div class="metrics-grid" id="metrics-grid">
+                    <!-- Metrics will be injected here via JS -->
+                    <div class="metric-card placeholder">
+                        蝑?敶梁?頛銝阡?憪???..
+                    </div>
+                </div>
+
+                <div class="report-container" id="report-container" style="display: none;">
+                    <h3>AI 閮箸?勗?</h3>
+                    <div class="report-content" id="report-content">
+                        <!-- Report details here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+// DOM Elements
+const videoUpload = document.getElementById('video-upload');
+const video = document.getElementById('source-video');
+const canvas = document.getElementById('output-canvas');
+const ctx = canvas.getContext('2d');
+const uploadPlaceholder = document.getElementById('upload-placeholder');
+const loadingOverlay = document.getElementById('loading-overlay');
+
+// Controls
+const btnPlayPause = document.getElementById('btn-play-pause');
+const btnPrevFrame = document.getElementById('btn-prev-frame');
+const btnNextFrame = document.getElementById('btn-next-frame');
+const selectSpeed = document.getElementById('playback-speed');
+const progressSlider = document.getElementById('video-progress');
+const timeDisplay = document.getElementById('current-time');
+const durationDisplay = document.getElementById('duration');
+
+// View & Analysis
+const btnFrontView = document.getElementById('btn-front-view');
+const btnSideView = document.getElementById('btn-side-view');
+const btnGenerateReport = document.getElementById('btn-generate-report');
+const btnExportCsv = document.getElementById('btn-export-csv');
+const metricsGrid = document.getElementById('metrics-grid');
+const groundOffsetSlider = document.getElementById('ground-offset');
+const groundOffsetVal = document.getElementById('ground-offset-val');
+
+if (groundOffsetSlider) {
+    groundOffsetSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        groundOffsetVal.textContent = Math.round(val * 100) + '%';
+        if (!isPlaying) processVideoFrame().catch(console.error);
+    });
+}
+const reportContainer = document.getElementById('report-container');
+const reportContent = document.getElementById('report-content');
+const gaitPhaseBadge = document.getElementById('gait-phase-badge');
+
+// State
+let currentView = 'front'; // 'front' | 'side'
+let isPlaying = false;
+let isVideoLoaded = false;
+let animationFrameId;
+
+let wasLeftContact = false;
+let wasRightContact = false;
+let currentLeftSuspensionMax = 0;
+let currentRightSuspensionMax = 0;
+let cornerLogs = [];
+let lastVideoTime = 0;
+
+function addCornerLog(msg) {
+    cornerLogs.push(msg);
+    if (cornerLogs.length > 8) {
+        cornerLogs.shift();
+    }
+}
+
+// Analysis Data Accumulation
+let analysisData = {
+    trunkLeanAngles: [],
+    kneeAngles: [],
+    hipAngles: [],
+    kneeValgusAngles: [],
+    ankleAngles: [],
+    pelvicDrops: [],
+    hipYPositions: [],
+    lastContact: null
+};
+let pixelsPerMeter = null;
+let gaitHistory = [];
+let currentPhase = 'unknown';
+let contactEvents = [];
+let timeSeriesData = [];
+
+// Initialize MediaPipe Pose
+const pose = new Pose({
+    locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+    }
+});
+
+pose.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
+});
+
+pose.onResults(onPoseResults);
+
+// Event Listeners: View Switching
+btnFrontView.addEventListener('click', () => {
+    currentView = 'front';
+    btnFrontView.classList.add('active');
+    btnSideView.classList.remove('active');
+    resetAnalysisData();
+    updateMetricsUI({});
+});
+
+btnSideView.addEventListener('click', () => {
+    currentView = 'side';
+    btnSideView.classList.add('active');
+    btnFrontView.classList.remove('active');
+    resetAnalysisData();
+    updateMetricsUI({});
+});
+
+// Event Listeners: Video Upload
+videoUpload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const url = URL.createObjectURL(file);
+        video.src = url;
+        uploadPlaceholder.style.display = 'none';
+        video.style.display = 'block';
+        canvas.style.display = 'block';
+        loadingOverlay.style.display = 'flex';
+        
+        video.load();
+    }
+});
+
+video.addEventListener('loadeddata', () => {
+    isVideoLoaded = true;
+    loadingOverlay.style.display = 'none';
+    
+    // Setup canvas resolution to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Enable controls
+    btnPlayPause.disabled = false;
+    btnPrevFrame.disabled = false;
+    btnNextFrame.disabled = false;
+    selectSpeed.disabled = false;
+    progressSlider.disabled = false;
+    btnGenerateReport.disabled = false;
+    btnExportCsv.disabled = false;
+    
+    durationDisplay.textContent = formatTime(video.duration);
+    progressSlider.max = video.duration;
+    
+    resetAnalysisData();
+    reportContainer.style.display = 'none';
+    
+    // Apply currently selected playback rate to the new video
+    const rate = parseFloat(selectSpeed.value);
+    video.playbackRate = rate;
+    video.defaultPlaybackRate = rate;
+    
+    // Process first frame
+    processVideoFrame().catch(console.error);
+});
+
+video.addEventListener('timeupdate', () => {
+    if (!video.seeking) {
+        progressSlider.value = video.currentTime;
+        timeDisplay.textContent = formatTime(video.currentTime);
+    }
+});
+
+progressSlider.addEventListener('input', () => {
+    video.currentTime = progressSlider.value;
+    timeDisplay.textContent = formatTime(video.currentTime);
+    if (!isPlaying) processVideoFrame().catch(console.error); // Update frame on drag
+});
+
+// Event Listeners: Playback
+btnPlayPause.addEventListener('click', togglePlay);
+selectSpeed.addEventListener('change', (e) => {
+    const rate = parseFloat(e.target.value);
+    video.playbackRate = rate;
+    video.defaultPlaybackRate = rate;
+});
+
+const frameStep = 1/30; // Assume 30fps
+btnNextFrame.addEventListener('click', () => {
+    video.pause();
+    isPlaying = false;
+    updatePlayBtnIcon();
+    video.currentTime = Math.min(video.currentTime + frameStep, video.duration);
+    processVideoFrame().catch(console.error);
+});
+
+btnPrevFrame.addEventListener('click', () => {
+    video.pause();
+    isPlaying = false;
+    updatePlayBtnIcon();
+    video.currentTime = Math.max(video.currentTime - frameStep, 0);
+    processVideoFrame().catch(console.error);
+});
+
+function togglePlay() {
+    if (isPlaying) {
+        video.pause();
+        isPlaying = false;
+    } else {
+        video.play().then(() => {
+            const rate = parseFloat(selectSpeed.value);
+            video.playbackRate = rate;
+            video.defaultPlaybackRate = rate;
+        }).catch(err => console.error("Play error:", err));
+        isPlaying = true;
+        startProcessingLoop();
+    }
+    updatePlayBtnIcon();
+}
+
+function updatePlayBtnIcon() {
+    if (isPlaying) {
+        btnPlayPause.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+    } else {
+        btnPlayPause.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon"><path d="M8 5v14l11-7z"/></svg>';
+    }
+}
+
+function formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 100);
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+}
+
+// Processing Loop
+let lastProcessedTime = -1;
+const offscreenCanvas = document.createElement('canvas');
+const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+
+async function processVideoFrame() {
+    if (!isVideoLoaded || video.videoWidth === 0) return;
+    
+    // 瑼Ｘ敶梁????臬?湔嚗??銴?????恍撠 MediaPipe ?萄?
+    if (video.currentTime !== lastProcessedTime) {
+        lastProcessedTime = video.currentTime;
+        
+        // 閫?捱 MediaPipe ?湔霈??video ??????WebGL 閮擃?蝝?瘣拇? (Texture Leak) ??
+        // 撠蔣??Ｗ??怠?梯???canvas 銝??漱蝯?MediaPipe ??嚗敺孵?閫?捱?剜?唬??璈???
+        if (offscreenCanvas.width !== video.videoWidth || offscreenCanvas.height !== video.videoHeight) {
+            offscreenCanvas.width = video.videoWidth;
+            offscreenCanvas.height = video.videoHeight;
+        }
+        offscreenCtx.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+        
+        await pose.send({image: offscreenCanvas});
+    }
+}
+
+function startProcessingLoop() {
+    if (!isPlaying) return;
+    processVideoFrame().then(() => {
+        if (isPlaying) {
+            animationFrameId = requestAnimationFrame(startProcessingLoop);
+        }
+    }).catch(err => {
+        console.error("Frame processing error:", err);
+        if (isPlaying) {
+            animationFrameId = requestAnimationFrame(startProcessingLoop);
+        }
+    });
+}
+
+video.addEventListener('ended', () => {
+    isPlaying = false;
+    updatePlayBtnIcon();
+    cancelAnimationFrame(animationFrameId);
+});
+
+// Utility: Angle calculation (3 points)
+function calculateAngle(a, b, c) {
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let angle = Math.abs(radians * 180.0 / Math.PI);
+    if (angle > 180.0) {
+        angle = 360 - angle;
+    }
+    return angle;
+}
+
+// Utility: Vertical angle (2 points relative to vertical)
+function calculateVerticalAngle(top, bottom) {
+    const dx = bottom.x - top.x;
+    const dy = bottom.y - top.y;
+    // 0 is perfectly vertical
+    const radians = Math.atan2(Math.abs(dx), Math.abs(dy));
+    return radians * 180.0 / Math.PI;
+}
+
+function resetAnalysisData() {
+    analysisData = {
+        trunkLeanAngles: [],
+        kneeAngles: [],
+        hipAngles: [],
+        kneeValgusAngles: [],
+        ankleAngles: [],
+        pelvicDrops: [],
+        hipYPositions: [],
+        lastContact: null,
+        leftContactTimes: [],
+        rightContactTimes: [],
+        leftStepLengths: [],
+        rightStepLengths: [],
+        leftKneeFlexions: [],
+        rightKneeFlexions: [],
+        currentLeftStanceStart: null,
+        currentRightStanceStart: null,
+        currentLeftMinKnee: 180,
+        currentRightMinKnee: 180,
+        hipTrajectory: []
+    };
+    gaitHistory = [];
+    currentPhase = 'unknown';
+    contactEvents = [];
+    timeSeriesData = [];
+    wasLeftContact = false;
+    wasRightContact = false;
+    currentLeftSuspensionMax = 0;
+    currentRightSuspensionMax = 0;
+    cornerLogs = [];
+    lastVideoTime = 0;
+    lastProcessedTime = -1;
+    if (gaitPhaseBadge) {
+        gaitPhaseBadge.textContent = '蝑???...';
+        gaitPhaseBadge.className = 'phase-badge';
+    }
+    reportContainer.style.display = 'none';
+}
+
+function onPoseResults(results) {
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (results.poseLandmarks) {
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color: 'rgba(255, 255, 255, 0.5)', lineWidth: 2});
+        drawLandmarks(ctx, results.poseLandmarks, {color: '#3b82f6', lineWidth: 1, radius: 3});
+        
+        analyzePose(results.poseLandmarks);
+    }
+    
+    ctx.restore();
+}
+
+function analyzePose(landmarks) {
+    // MediaPipe Landmarks mapping
+    const LEFT_SHOULDER = landmarks[11];
+    const RIGHT_SHOULDER = landmarks[12];
+    const LEFT_HIP = landmarks[23];
+    const RIGHT_HIP = landmarks[24];
+    const LEFT_KNEE = landmarks[25];
+    const RIGHT_KNEE = landmarks[26];
+    const LEFT_ANKLE = landmarks[27];
+    const RIGHT_ANKLE = landmarks[28];
+    const LEFT_HEEL = landmarks[29];
+    const RIGHT_HEEL = landmarks[30];
+    const LEFT_FOOT = landmarks[31];
+    const RIGHT_FOOT = landmarks[32];
+    
+    if (!LEFT_SHOULDER || !RIGHT_SHOULDER || !LEFT_HIP || !RIGHT_HIP || 
+        !LEFT_KNEE || !RIGHT_KNEE || !LEFT_ANKLE || !RIGHT_ANKLE || 
+        !LEFT_HEEL || !RIGHT_HEEL || !LEFT_FOOT || !RIGHT_FOOT) {
+        return; // Skip analysis if required landmarks are missing
+    }
+    
+    let currentMetrics = {};
+    
+    // Midpoints for trunk
+    const midShoulder = { x: (LEFT_SHOULDER.x + RIGHT_SHOULDER.x)/2, y: (LEFT_SHOULDER.y + RIGHT_SHOULDER.y)/2 };
+    const midHip = { x: (LEFT_HIP.x + RIGHT_HIP.x)/2, y: (LEFT_HIP.y + RIGHT_HIP.y)/2 };
+    
+    // Vertical Oscillation Tracking
+    analysisData.hipYPositions.push(midHip.y);
+    if (analysisData.hipYPositions.length > 90) analysisData.hipYPositions.shift();
+    
+    // Trajectory Tracking
+    analysisData.hipTrajectory.push({ x: midHip.x, y: midHip.y, time: video.currentTime });
+    if (analysisData.hipTrajectory.length > 150) analysisData.hipTrajectory.shift();
+    
+    // Track continuous knee flexion for both legs
+    const leftKneeAngleRaw = calculateAngle(LEFT_HIP, LEFT_KNEE, LEFT_ANKLE);
+    const rightKneeAngleRaw = calculateAngle(RIGHT_HIP, RIGHT_KNEE, RIGHT_ANKLE);
+    if (leftKneeAngleRaw < analysisData.currentLeftMinKnee) analysisData.currentLeftMinKnee = leftKneeAngleRaw;
+    if (rightKneeAngleRaw < analysisData.currentRightMinKnee) analysisData.currentRightMinKnee = rightKneeAngleRaw;
+    
+    // Explicitly add individual joint angles to currentMetrics for CSV export
+    currentMetrics.leftKneeAngle = leftKneeAngleRaw;
+    currentMetrics.rightKneeAngle = rightKneeAngleRaw;
+    currentMetrics.leftHipAngle = calculateAngle(LEFT_SHOULDER, LEFT_HIP, LEFT_KNEE);
+    currentMetrics.rightHipAngle = calculateAngle(RIGHT_SHOULDER, RIGHT_HIP, RIGHT_KNEE);
+    currentMetrics.leftAnkleAngle = calculateAngle(LEFT_KNEE, LEFT_ANKLE, LEFT_FOOT);
+    currentMetrics.rightAnkleAngle = calculateAngle(RIGHT_KNEE, RIGHT_ANKLE, RIGHT_FOOT);
+    
+    // --- Manual Ground Detection (??隤踵?唳雿蔭) ---
+    // Use the lowest point of the foot (Heel, Ankle, or Foot Index)
+    const leftFootLowestY = Math.max(LEFT_ANKLE.y, LEFT_HEEL.y, LEFT_FOOT.y);
+    const rightFootLowestY = Math.max(RIGHT_ANKLE.y, RIGHT_HEEL.y, RIGHT_FOOT.y);
+    
+    // Manual offset from slider (now acts as absolute Y position percentage)
+    const dynamicGroundY = groundOffsetSlider ? parseFloat(groundOffsetSlider.value) : 0.85;
+    
+    // Draw the ground line on canvas
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, dynamicGroundY * canvas.height);
+    ctx.lineTo(canvas.width, dynamicGroundY * canvas.height);
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 4]);
+    ctx.stroke();
+    
+    // Add text label for Ground
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.8)';
+    ctx.font = '14px Inter';
+    ctx.fillText('???唳蝺?(Manual Ground)', 10, dynamicGroundY * canvas.height - 10);
+    ctx.restore();
+    
+    let newPhase = 'flight';
+    const groundTolerance = 0.035; // 3.5% of video height tolerance
+    
+    const isLeftContact = leftFootLowestY > dynamicGroundY - groundTolerance;
+    const isRightContact = rightFootLowestY > dynamicGroundY - groundTolerance;
+
+    // --- Logging logic for landing times and suspension heights ---
+    if (video.currentTime < lastVideoTime - 0.5) {
+        // Rewind detected
+        wasLeftContact = false;
+        wasRightContact = false;
+        currentLeftSuspensionMax = 0;
+        currentRightSuspensionMax = 0;
+    }
+    lastVideoTime = video.currentTime;
+
+    const leftDist = dynamicGroundY - leftFootLowestY;
+    const rightDist = dynamicGroundY - rightFootLowestY;
+
+    if (!isLeftContact) {
+        if (leftDist > currentLeftSuspensionMax) currentLeftSuspensionMax = leftDist;
+        if (wasLeftContact && analysisData.currentLeftStanceStart !== null) {
+            analysisData.leftContactTimes.push(video.currentTime - analysisData.currentLeftStanceStart);
+            analysisData.currentLeftStanceStart = null;
+        }
+    }
+    if (!isRightContact) {
+        if (rightDist > currentRightSuspensionMax) currentRightSuspensionMax = rightDist;
+        if (wasRightContact && analysisData.currentRightStanceStart !== null) {
+            analysisData.rightContactTimes.push(video.currentTime - analysisData.currentRightStanceStart);
+            analysisData.currentRightStanceStart = null;
+        }
+    }
+
+    if (isLeftContact && !wasLeftContact) {
+        if (currentLeftSuspensionMax > 0) {
+            addCornerLog(`撌西?擃蝛? ${(currentLeftSuspensionMax * 100).toFixed(1)}%`);
+        }
+        let strikeType = "銝剛雲(Mid)";
+        if (LEFT_HEEL.y > LEFT_FOOT.y + 0.015) strikeType = "?唾?(Heel)";
+        else if (LEFT_FOOT.y > LEFT_HEEL.y + 0.015) strikeType = "??(Fore)";
+        
+        addCornerLog(`撌西? [${strikeType}]: ${formatTime(video.currentTime)}`);
+        
+        if (analysisData.lastContact && analysisData.lastContact.side === 'right') {
+            let stepDistX = Math.abs(LEFT_HEEL.x - analysisData.lastContact.x);
+            let val = pixelsPerMeter ? stepDistX / pixelsPerMeter : stepDistX;
+            currentMetrics.stepLength = val;
+            analysisData.leftStepLengths.push(val);
+        }
+        analysisData.lastContact = { side: 'left', x: LEFT_HEEL.x };
+        
+        currentLeftSuspensionMax = 0;
+        analysisData.currentLeftStanceStart = video.currentTime;
+        if (analysisData.currentLeftMinKnee < 180) {
+            analysisData.leftKneeFlexions.push(analysisData.currentLeftMinKnee);
+        }
+        analysisData.currentLeftMinKnee = 180;
+    }
+
+    if (isRightContact && !wasRightContact) {
+        if (currentRightSuspensionMax > 0) {
+            addCornerLog(`?唾?擃蝛? ${(currentRightSuspensionMax * 100).toFixed(1)}%`);
+        }
+        let strikeType = "銝剛雲(Mid)";
+        if (RIGHT_HEEL.y > RIGHT_FOOT.y + 0.015) strikeType = "?唾?(Heel)";
+        else if (RIGHT_FOOT.y > RIGHT_HEEL.y + 0.015) strikeType = "??(Fore)";
+        
+        addCornerLog(`?唾? [${strikeType}]: ${formatTime(video.currentTime)}`);
+        
+        if (analysisData.lastContact && analysisData.lastContact.side === 'left') {
+            let stepDistX = Math.abs(RIGHT_HEEL.x - analysisData.lastContact.x);
+            let val = pixelsPerMeter ? stepDistX / pixelsPerMeter : stepDistX;
+            currentMetrics.stepLength = val;
+            analysisData.rightStepLengths.push(val);
+        }
+        analysisData.lastContact = { side: 'right', x: RIGHT_HEEL.x };
+        
+        currentRightSuspensionMax = 0;
+        analysisData.currentRightStanceStart = video.currentTime;
+        if (analysisData.currentRightMinKnee < 180) {
+            analysisData.rightKneeFlexions.push(analysisData.currentRightMinKnee);
+        }
+        analysisData.currentRightMinKnee = 180;
+    }
+
+    wasLeftContact = isLeftContact;
+    wasRightContact = isRightContact;
+    
+    if (isLeftContact && !isRightContact) newPhase = 'stance-left';
+    else if (isRightContact && !isLeftContact) newPhase = 'stance-right';
+    else if (isLeftContact && isRightContact) {
+        newPhase = leftFootLowestY > rightFootLowestY ? 'stance-left' : 'stance-right';
+    }
+    
+    if (newPhase !== currentPhase) {
+        let eventType = '';
+        if (newPhase.includes('stance') && currentPhase === 'flight') eventType = '閫詨?祇? (Initial Contact)';
+        else if (newPhase === 'flight' && currentPhase.includes('stance')) eventType = '?Ｗ?祇? (Toe-Off)';
+        
+        if (eventType) {
+            contactEvents.push({
+                time: video.currentTime,
+                event: eventType,
+                side: newPhase.replace('stance-', '') || currentPhase.replace('stance-', ''),
+                // we will attach metrics below
+            });
+        }
+        currentPhase = newPhase;
+        
+        let phaseText = '?貊征??(Flight)';
+        if (currentPhase === 'stance-left') phaseText = '撌西?舀???(L Stance)';
+        if (currentPhase === 'stance-right') phaseText = '?唾?舀???(R Stance)';
+        if (gaitPhaseBadge) {
+            gaitPhaseBadge.textContent = phaseText;
+            gaitPhaseBadge.className = `phase-badge ${currentPhase}`;
+        }
+    }
+    // ---------------------------------------
+
+    // Determine the active (stance or lowest) leg
+    const isLeftLower = LEFT_ANKLE.y > RIGHT_ANKLE.y;
+    const aHip = isLeftLower ? LEFT_HIP : RIGHT_HIP;
+    const aKnee = isLeftLower ? LEFT_KNEE : RIGHT_KNEE;
+    const aAnkle = isLeftLower ? LEFT_ANKLE : RIGHT_ANKLE;
+    const aFoot = isLeftLower ? LEFT_FOOT : RIGHT_FOOT;
+    const aShoulder = isLeftLower ? LEFT_SHOULDER : RIGHT_SHOULDER;
+    
+    if (currentView === 'side') {
+        let strikeType = isLeftLower ? 
+            (LEFT_HEEL.y > LEFT_FOOT.y + 0.015 ? 'heel' : 'other') : 
+            (RIGHT_HEEL.y > RIGHT_FOOT.y + 0.015 ? 'heel' : 'other');
+        const aTibiaAngle = calculateVerticalAngle(aKnee, aAnkle);
+        if (strikeType === 'heel' && aTibiaAngle > 10) {
+            currentMetrics.overstrideWarning = true;
+        }
+        
+        const trunkLean = calculateVerticalAngle(midShoulder, midHip);
+        analysisData.trunkLeanAngles.push(trunkLean);
+        currentMetrics.trunkLean = trunkLean;
+        
+        const kneeAngle = calculateAngle(aHip, aKnee, aAnkle);
+        analysisData.kneeAngles.push(kneeAngle);
+        currentMetrics.kneeAngle = kneeAngle;
+        
+        const hipAngle = calculateAngle(aShoulder, aHip, aKnee);
+        analysisData.hipAngles.push(hipAngle);
+        currentMetrics.hipAngle = hipAngle;
+
+        const ankleAngle = calculateAngle(aKnee, aAnkle, aFoot);
+        analysisData.ankleAngles.push(ankleAngle);
+        currentMetrics.ankleAngle = ankleAngle;
+        
+    } else if (currentView === 'front') {
+        const trunkLean = calculateVerticalAngle(midShoulder, midHip);
+        analysisData.trunkLeanAngles.push(trunkLean);
+        currentMetrics.trunkLean = trunkLean;
+        
+        const kneeValgus = calculateAngle(aHip, aKnee, aAnkle);
+        analysisData.kneeValgusAngles.push(kneeValgus);
+        currentMetrics.kneeValgus = kneeValgus;
+
+        // Pelvic Drop
+        const dx = RIGHT_HIP.x - LEFT_HIP.x;
+        const dy = RIGHT_HIP.y - LEFT_HIP.y;
+        const pelvicDrop = Math.abs(Math.atan2(dy, Math.abs(dx)) * 180 / Math.PI);
+        analysisData.pelvicDrops.push(pelvicDrop);
+        currentMetrics.pelvicDrop = pelvicDrop;
+    }
+    
+    // Attach metrics to the latest event if it happened this frame
+    if (contactEvents.length > 0 && contactEvents[contactEvents.length - 1].time === video.currentTime) {
+        contactEvents[contactEvents.length - 1].metrics = { ...currentMetrics };
+    }
+    
+    // Calculate SPM
+    let spm = 0;
+    if (contactEvents.length >= 3) {
+        const recentEvents = contactEvents.slice(-4);
+        const duration = recentEvents[recentEvents.length-1].time - recentEvents[0].time;
+        if (duration > 0) spm = Math.round((recentEvents.length - 1) / duration * 60);
+    }
+    
+    // Calculate Vertical Oscillation
+    let vOscillation = 0;
+    if (analysisData.hipYPositions.length > 10) {
+        const maxY = Math.max(...analysisData.hipYPositions);
+        const minY = Math.min(...analysisData.hipYPositions);
+        vOscillation = (maxY - minY) * 100;
+    }
+    currentMetrics.spm = spm;
+    currentMetrics.vOscillation = vOscillation;
+    
+    // Raw Landmarks for CSV
+    let rawLandmarkData = {};
+    for (let i = 0; i < 33; i++) {
+        if (landmarks[i]) {
+            rawLandmarkData[`LM_${i}_X`] = landmarks[i].x.toFixed(4);
+            rawLandmarkData[`LM_${i}_Y`] = landmarks[i].y.toFixed(4);
+            rawLandmarkData[`LM_${i}_Z`] = landmarks[i].z.toFixed(4);
+            rawLandmarkData[`LM_${i}_Vis`] = landmarks[i].visibility.toFixed(4);
+        } else {
+            rawLandmarkData[`LM_${i}_X`] = ''; rawLandmarkData[`LM_${i}_Y`] = '';
+            rawLandmarkData[`LM_${i}_Z`] = ''; rawLandmarkData[`LM_${i}_Vis`] = '';
+        }
+    }
+    
+    // Store data for CSV export
+    timeSeriesData.push({
+        time: video.currentTime.toFixed(3),
+        phase: currentPhase,
+        trunkLean: currentMetrics.trunkLean ? currentMetrics.trunkLean.toFixed(2) : '',
+        kneeAngle: currentMetrics.kneeAngle ? currentMetrics.kneeAngle.toFixed(2) : '',
+        hipAngle: currentMetrics.hipAngle ? currentMetrics.hipAngle.toFixed(2) : '',
+        ankleAngle: currentMetrics.ankleAngle ? currentMetrics.ankleAngle.toFixed(2) : '',
+        kneeValgus: currentMetrics.kneeValgus ? currentMetrics.kneeValgus.toFixed(2) : '',
+        pelvicDrop: currentMetrics.pelvicDrop ? currentMetrics.pelvicDrop.toFixed(2) : '',
+        leftKneeAngle: currentMetrics.leftKneeAngle ? currentMetrics.leftKneeAngle.toFixed(2) : '',
+        rightKneeAngle: currentMetrics.rightKneeAngle ? currentMetrics.rightKneeAngle.toFixed(2) : '',
+        leftHipAngle: currentMetrics.leftHipAngle ? currentMetrics.leftHipAngle.toFixed(2) : '',
+        rightHipAngle: currentMetrics.rightHipAngle ? currentMetrics.rightHipAngle.toFixed(2) : '',
+        leftAnkleAngle: currentMetrics.leftAnkleAngle ? currentMetrics.leftAnkleAngle.toFixed(2) : '',
+        rightAnkleAngle: currentMetrics.rightAnkleAngle ? currentMetrics.rightAnkleAngle.toFixed(2) : '',
+        spm: currentMetrics.spm,
+        vOscillation: currentMetrics.vOscillation,
+        stepLength: currentMetrics.stepLength || '',
+        rawLandmarks: rawLandmarkData
+    });
+
+    updateMetricsUI(currentMetrics);
+
+    // Draw corner logs
+    ctx.save();
+    const fontSize = Math.max(16, Math.floor(canvas.height * 0.025));
+    ctx.font = `bold ${fontSize}px "Microsoft JhengHei", Inter, sans-serif`;
+    ctx.textAlign = 'right';
+    
+    const lineSpacing = fontSize * 1.5;
+    const padding = fontSize;
+    
+    for (let i = 0; i < cornerLogs.length; i++) {
+        const text = cornerLogs[i];
+        const y = canvas.height - padding - ((cornerLogs.length - 1 - i) * lineSpacing);
+        
+        ctx.fillStyle = 'black';
+        ctx.fillText(text, canvas.width - padding + 2, y + 2);
+        ctx.fillText(text, canvas.width - padding - 2, y - 2);
+        ctx.fillText(text, canvas.width - padding + 2, y - 2);
+        ctx.fillText(text, canvas.width - padding - 2, y + 2);
+        
+        if (text.includes('撌西')) ctx.fillStyle = '#60A5FA';
+        else if (text.includes('?唾')) ctx.fillStyle = '#F87171';
+        else ctx.fillStyle = '#FFF';
+
+        ctx.fillText(text, canvas.width - padding, y);
+    }
+    ctx.restore();
+    
+    // Draw Hip Trajectory (Wave)
+    if (analysisData.hipTrajectory.length > 0) {
+        const avgY = analysisData.hipTrajectory.reduce((sum, pt) => sum + pt.y, 0) / analysisData.hipTrajectory.length;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(0, avgY * canvas.height);
+        ctx.lineTo(canvas.width, avgY * canvas.height);
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        const currentPt = analysisData.hipTrajectory[analysisData.hipTrajectory.length - 1];
+        const pxPerSec = canvas.width * 0.2;
+        
+        for (let i = 0; i < analysisData.hipTrajectory.length; i++) {
+            const pt = analysisData.hipTrajectory[i];
+            const timeDiff = currentPt.time - pt.time;
+            const drawX = (currentPt.x * canvas.width) - (timeDiff * pxPerSec);
+            const drawY = pt.y * canvas.height;
+            if (i === 0) ctx.moveTo(drawX, drawY);
+            else ctx.lineTo(drawX, drawY);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+    
+    drawCustomAnnotations(ctx);
+}
+
+function updateMetricsUI(metrics) {
+    if (Object.keys(metrics).length === 0) {
+        metricsGrid.innerHTML = '<div class="metric-card placeholder">???剜???脣漲璇誑?脰???</div>';
+        return;
+    }
+    
+    let html = '';
+    
+    // Global risks
+    if (metrics.overstrideWarning) {
+        html += `
+        <div class="metric-card danger">
+            <div class="metric-header">
+                <span class="metric-title">?憸券 (Landing Risk)</span>
+                <span class="metric-value" style="color:var(--danger-color); font-size:1rem;">?漲頝冽郊</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">?爸?漲?銝頝??堆??航憓???蝭鞎?</div>
+        </div>`;
+    }
+
+    // Add SPM and VOscillation globally
+    if (metrics.spm > 0) {
+        let spmClass = '';
+        let spmHint = '';
+        if (metrics.spm >= 170 && metrics.spm <= 180) {
+            spmClass = 'success';
+            spmHint = '<div style="font-size: 0.8rem; color: var(--secondary-color); margin-top: 4px;">甇仿????/div>';
+        } else if (metrics.spm < 160) {
+            spmClass = 'warning';
+            spmHint = '<div style="font-size: 0.8rem; color: var(--warning-color); margin-top: 4px;">甇仿??嚗?賢???蝭鞎</div>';
+        }
+        
+        html += `
+        <div class="metric-card ${spmClass}">
+            <div class="metric-header">
+                <span class="metric-title">甇仿 (Cadence/SPM)</span>
+                <span class="metric-value">${metrics.spm}</span>
+            </div>
+            <div class="metric-bar-bg">
+                <div class="metric-bar-fill" style="width: ${Math.min((metrics.spm/200)*100, 100)}%"></div>
+            </div>
+            ${spmHint}
+        </div>`;
+    }
+    if (metrics.stepLength > 0) {
+        html += createMetricCard('?其摯甇亙? (Step Length)', metrics.stepLength, 0.5, 2.0, '');
+        // Replace valStr to show 'm'
+        html = html.replace(metrics.stepLength.toFixed(1) + '簞', metrics.stepLength.toFixed(2) + ' m');
+    }
+    if (metrics.vOscillation > 0) {
+        let vOscDisplay = parseFloat(metrics.vOscillation).toFixed(1);
+        html += `
+        <div class="metric-card ${metrics.vOscillation > 10 ? 'warning' : ''}">
+            <div class="metric-header">
+                <span class="metric-title">??臬? (V. Oscillation)</span>
+                <span class="metric-value">${vOscDisplay}%</span>
+            </div>
+            <div class="metric-bar-bg">
+                <div class="metric-bar-fill" style="width: ${Math.min((metrics.vOscillation/15)*100, 100)}%"></div>
+            </div>
+        </div>`;
+    }
+
+    if (currentView === 'side') {
+        html += createMetricCard('頠撟孵??曇? (Trunk Lean)', metrics.trunkLean, 0, 45, metrics.trunkLean > 20 ? 'warning' : '');
+        html += createMetricCard('??蝭閫漲 (Knee Angle)', metrics.kneeAngle, 0, 180, metrics.kneeAngle < 130 ? 'warning' : '');
+        html += createMetricCard('擃?蝭隡詨? (Hip Flex/Ext)', metrics.hipAngle, 0, 180, '');
+        html += createMetricCard('頦?蝭閫漲 (Ankle Angle)', metrics.ankleAngle, 45, 180, metrics.ankleAngle < 80 ? 'danger' : '');
+    } else {
+        html += createMetricCard('頠撟孵?曇? (Lateral Lean)', metrics.trunkLean, 0, 30, metrics.trunkLean > 10 ? 'warning' : '');
+        html += createMetricCard('撉函??暹? (Pelvic Drop)', metrics.pelvicDrop, 0, 30, metrics.pelvicDrop > 8 ? 'warning' : '');
+        html += createMetricCard('銝?? (Knee Valgus)', metrics.kneeValgus, 0, 180, metrics.kneeValgus < 165 ? 'danger' : '');
+    }
+    
+    metricsGrid.innerHTML = html;
+}
+
+function createMetricCard(title, value, min, max, statusClass) {
+    const valStr = value ? value.toFixed(1) + '簞' : '--';
+    const percentage = value ? Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100) : 0;
+    
+    return `
+        <div class="metric-card ${statusClass}">
+            <div class="metric-header">
+                <span class="metric-title">${title}</span>
+                <span class="metric-value">${valStr}</span>
+            </div>
+            <div class="metric-bar-bg">
+                <div class="metric-bar-fill" style="width: ${percentage}%"></div>
+            </div>
+        </div>
+    `;
+}
+
+// Export CSV
+btnExportCsv.addEventListener('click', () => {
+    if (timeSeriesData.length === 0) {
+        alert('撠?豢??臬?綽?隢??剜敶梁??脰???嚗?);
+        return;
+    }
+    
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM
+    csvContent += "Time(s),Gait Phase,SPM,Step_Length(m),V_Oscillation(%),Trunk Lean(deg),Knee Angle(deg),Hip Angle(deg),Ankle Angle(deg),Knee Valgus(deg),Pelvic Drop(deg),L_Knee(deg),R_Knee(deg),L_Hip(deg),R_Hip(deg),L_Ankle(deg),R_Ankle(deg)";
+    for (let i = 0; i < 33; i++) {
+        csvContent += `,LM_${i}_X,LM_${i}_Y,LM_${i}_Z,LM_${i}_Vis`;
+    }
+    csvContent += "\n";
+    
+    timeSeriesData.forEach(row => {
+        let phaseZh = row.phase === 'flight' ? '?貊征?? : (row.phase === 'stance-left' ? '撌西?舀?' : (row.phase === 'stance-right' ? '?唾?舀?' : '?芰'));
+        let line = `${row.time},${phaseZh},${row.spm || ''},${row.stepLength ? parseFloat(row.stepLength).toFixed(2) : ''},${row.vOscillation ? parseFloat(row.vOscillation).toFixed(2) : ''},${row.trunkLean},${row.kneeAngle},${row.hipAngle},${row.ankleAngle},${row.kneeValgus},${row.pelvicDrop},${row.leftKneeAngle || ''},${row.rightKneeAngle || ''},${row.leftHipAngle || ''},${row.rightHipAngle || ''},${row.leftAnkleAngle || ''},${row.rightAnkleAngle || ''}`;
+        
+        for (let i = 0; i < 33; i++) {
+            line += `,${row.rawLandmarks[`LM_${i}_X`]},${row.rawLandmarks[`LM_${i}_Y`]},${row.rawLandmarks[`LM_${i}_Z`]},${row.rawLandmarks[`LM_${i}_Vis`]}`;
+        }
+        csvContent += line + "\n";
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "run_analysis_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+// Generate Report
+btnGenerateReport.addEventListener('click', () => {
+    video.pause();
+    isPlaying = false;
+    updatePlayBtnIcon();
+    
+    let problems = [];
+    
+    const avgLeftContact = analysisData.leftContactTimes.length ? analysisData.leftContactTimes.reduce((a, b) => a + b, 0) / analysisData.leftContactTimes.length : 0;
+    const avgRightContact = analysisData.rightContactTimes.length ? analysisData.rightContactTimes.reduce((a, b) => a + b, 0) / analysisData.rightContactTimes.length : 0;
+    const avgLeftStep = analysisData.leftStepLengths.length ? analysisData.leftStepLengths.reduce((a, b) => a + b, 0) / analysisData.leftStepLengths.length : 0;
+    const avgRightStep = analysisData.rightStepLengths.length ? analysisData.rightStepLengths.reduce((a, b) => a + b, 0) / analysisData.rightStepLengths.length : 0;
+    const avgLeftKneeFlex = analysisData.leftKneeFlexions.length ? analysisData.leftKneeFlexions.reduce((a, b) => a + b, 0) / analysisData.leftKneeFlexions.length : 0;
+    const avgRightKneeFlex = analysisData.rightKneeFlexions.length ? analysisData.rightKneeFlexions.reduce((a, b) => a + b, 0) / analysisData.rightKneeFlexions.length : 0;
+    
+    function getDiffPercent(l, r) {
+        if (l === 0 && r === 0) return 0;
+        const max = Math.max(l, r);
+        return Math.abs(l - r) / max * 100;
+    }
+    
+    const contactDiff = getDiffPercent(avgLeftContact, avgRightContact);
+    const stepDiff = getDiffPercent(avgLeftStep, avgRightStep);
+    const kneeFlexDiff = getDiffPercent(avgLeftKneeFlex, avgRightKneeFlex);
+    
+    if (avgLeftContact && avgRightContact) {
+        problems.push({ text: `--- 撠迂?批???(Symmetry Analysis) ---`, type: 'normal' });
+        
+        let msg1 = `閫詨??: 撌?${avgLeftContact.toFixed(3)}s, ??${avgRightContact.toFixed(3)}s (撌桃 ${contactDiff.toFixed(1)}%)`;
+        problems.push({ text: msg1, type: contactDiff > 10 ? 'issue-danger' : (contactDiff >= 5 ? 'issue-warning' : 'normal') });
+        
+        if (avgLeftStep && avgRightStep) {
+            let msg2 = `?其摯甇仿: 撌?${avgLeftStep.toFixed(2)}, ??${avgRightStep.toFixed(2)} (撌桃 ${stepDiff.toFixed(1)}%)`;
+            problems.push({ text: msg2, type: stepDiff > 10 ? 'issue-danger' : (stepDiff >= 5 ? 'issue-warning' : 'normal') });
+        }
+        
+        let msg3 = `?憭扯?撅: 撌?${avgLeftKneeFlex.toFixed(1)}簞, ??${avgRightKneeFlex.toFixed(1)}簞 (撌桃 ${kneeFlexDiff.toFixed(1)}%)`;
+        problems.push({ text: msg3, type: kneeFlexDiff > 10 ? 'issue-danger' : (kneeFlexDiff >= 5 ? 'issue-warning' : 'normal') });
+    }
+    
+    if (currentView === 'side') {
+        const maxLean = Math.max(...(analysisData.trunkLeanAngles.length ? analysisData.trunkLeanAngles : [0]));
+        const minKnee = Math.min(...(analysisData.kneeAngles.length ? analysisData.kneeAngles : [180]));
+        const maxHip = Math.max(...(analysisData.hipAngles.length ? analysisData.hipAngles : [0]));
+        const minAnkle = Math.min(...(analysisData.ankleAngles.length ? analysisData.ankleAngles : [180]));
+        
+        if (maxLean > 15) {
+            problems.push({ text: `?湧?頠撟寥?摨血???(?憭?${maxLean.toFixed(1)}簞)?遣霅啣?撘瑟敹???剁?蝬剜?蝛拙??, type: 'issue-warning' });
+        }
+        if (minKnee < 130) {
+            problems.push({ text: `?舀??????漲敶 (?撠?${minKnee.toFixed(1)}簞)??賣??漲頝冽郊(Overstriding)??頠???撱箄降??甇仿?, type: 'issue-danger' });
+        }
+        if (maxHip < 160) {
+            problems.push({ text: `?Ｗ????敺撓銝雲 (?憭?${maxHip.toFixed(1)}簞)?頩砍?????撱箄降?暸?擃??, type: 'issue-warning' });
+        }
+        if (minAnkle < 80) {
+            problems.push({ text: `頦?蝭?漲?? (?撠?${minAnkle.toFixed(1)}簞)??賡?粹??航???之?, type: 'issue-danger' });
+        }
+        
+        // Analyze specific events
+        const contacts = contactEvents.filter(e => e.event.includes('Initial Contact'));
+        if (contacts.length > 0) {
+            let avgContactKnee = contacts.reduce((sum, e) => sum + (e.metrics.kneeAngle || 180), 0) / contacts.length;
+            if (avgContactKnee < 150) {
+                problems.push({ text: `?孛?啁???? 閫詨?????脣漲憭?(撟喳? ${avgContactKnee.toFixed(1)}簞)嚗Ⅱ隤暺?血??甇???嫘, type: 'issue-warning' });
+            } else {
+                problems.push({ text: `?孛?啁???? 閫詨????閫漲甇?虜 (撟喳? ${avgContactKnee.toFixed(1)}簞)?, type: 'normal' });
+            }
+        }
+
+    } else {
+        const maxLean = Math.max(...(analysisData.trunkLeanAngles.length ? analysisData.trunkLeanAngles : [0]));
+        const minValgus = Math.min(...(analysisData.kneeValgusAngles.length ? analysisData.kneeValgusAngles : [180]));
+        const maxDrop = Math.max(...(analysisData.pelvicDrops.length ? analysisData.pelvicDrops : [0]));
+        
+        if (maxLean > 10) {
+            problems.push({ text: `頠撟孵椰?單???憭?(?游??${maxLean.toFixed(1)}簞)??質”蝷箸敹?, type: 'issue-warning' });
+        }
+        if (maxDrop > 8) {
+            problems.push({ text: `撉函??漲?暹?/? (Pelvic Drop ??${maxDrop.toFixed(1)}簞)???銝剛??∪? (Trendelenburg sign)?, type: 'issue-danger' });
+        }
+        if (minValgus < 165) {
+            problems.push({ text: `?箇??蝧?X? (憭曇? ${minValgus.toFixed(1)}簞)??憓???蝭(擃爸/?葆)?憸券?, type: 'issue-danger' });
+        } else {
+            problems.push({ text: `銝?????臬末 (?撠?摨?${minValgus.toFixed(1)}簞)?, type: 'normal' });
+        }
+        
+        // Analyze specific events
+        const stances = contactEvents.filter(e => e.event.includes('Initial Contact') || e.event.includes('Toe-Off'));
+        if (stances.length > 0) {
+            problems.push({ text: `??????? 撌脰???${stances.length} 甈∟孛???Ｗ鈭辣嚗???銝?豢?蝬?閰摯?, type: 'normal' });
+        }
+    }
+    
+    if (problems.length === 0) {
+        problems.push({ text: "?芣?頞喳??豢?嚗??剜敶梁?隞仿脰?????, type: 'normal' });
+    }
+    
+    renderReport(problems);
+});
+
+function renderReport(problems) {
+    reportContainer.style.display = 'block';
+    
+    let html = '<ul>';
+    problems.forEach(p => {
+        html += `<li class="${p.type}">${p.text}</li>`;
+    });
+    html += '</ul>';
+    
+    // Add Event Log
+    if (contactEvents.length > 0) {
+        html += '<h4 style="margin-top:16px; margin-bottom:8px; color:var(--text-muted); font-size:0.9rem;">??暺???(Event Log)</h4>';
+        html += '<ul style="font-size: 0.8rem; opacity: 0.8;">';
+        // Show last 5 events
+        contactEvents.slice(-5).forEach(e => {
+            html += `<li style="list-style-type: none;">[${formatTime(e.time)}] ${e.side === 'left' ? '撌西' : '?唾'} ${e.event}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    reportContent.innerHTML = html;
+    
+    // Scroll to report
+    reportContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Helper to draw Mediapipe points since we didn't import drawing_utils
+function drawConnectors(ctx, landmarks, connections, style) {
+    ctx.strokeStyle = style.color || 'white';
+    ctx.lineWidth = style.lineWidth || 2;
+    for (const connection of connections) {
+        const from = landmarks[connection[0]];
+        const to = landmarks[connection[1]];
+        if (from && to && from.visibility > 0.5 && to.visibility > 0.5) {
+            ctx.beginPath();
+            ctx.moveTo(from.x * canvas.width, from.y * canvas.height);
+            ctx.lineTo(to.x * canvas.width, to.y * canvas.height);
+            ctx.stroke();
+        }
+    }
+}
+
+function drawLandmarks(ctx, landmarks, style) {
+    ctx.fillStyle = style.color || 'white';
+    const radius = style.radius || 3;
+    for (const landmark of landmarks) {
+        if (landmark.visibility > 0.5) {
+            ctx.beginPath();
+            ctx.arc(landmark.x * canvas.width, landmark.y * canvas.height, radius, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    }
+}
+
+// Define Connections since @mediapipe/pose doesn't expose it directly without camera_utils
+const POSE_CONNECTIONS = [
+    [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
+    [11, 23], [12, 24], [23, 24],
+    [23, 25], [24, 26], [25, 27], [26, 28],
+    [27, 29], [28, 30], [29, 31], [30, 32],
+    [27, 31], [28, 32]
+];
+
+// --- Canvas Manual Tools ---
+const btnToolNone = document.getElementById('btn-tool-none');
+const btnToolAngle = document.getElementById('btn-tool-angle');
+const btnToolPlumb = document.getElementById('btn-tool-plumb');
+const btnToolCalibrate = document.getElementById('btn-tool-calibrate');
+const btnToolMeasure = document.getElementById('btn-tool-measure');
+const btnToolClear = document.getElementById('btn-tool-clear');
+
+let currentTool = 'none';
+let toolPoints = []; 
+let customAnnotations = []; 
+
+function resetToolButtons() {
+    [btnToolNone, btnToolAngle, btnToolPlumb, btnToolCalibrate, btnToolMeasure].forEach(btn => {
+        if(btn) {
+            btn.classList.remove('active');
+            btn.style.background = 'rgba(255,255,255,0.1)';
+        }
+    });
+}
+
+if(btnToolNone) btnToolNone.addEventListener('click', () => { currentTool = 'none'; toolPoints = []; resetToolButtons(); btnToolNone.classList.add('active'); btnToolNone.style.background=''; });
+if(btnToolAngle) btnToolAngle.addEventListener('click', () => { currentTool = 'angle'; toolPoints = []; resetToolButtons(); btnToolAngle.classList.add('active'); btnToolAngle.style.background='var(--primary)'; });
+if(btnToolPlumb) btnToolPlumb.addEventListener('click', () => { currentTool = 'plumb'; toolPoints = []; resetToolButtons(); btnToolPlumb.classList.add('active'); btnToolPlumb.style.background='var(--primary)'; });
+if(btnToolCalibrate) btnToolCalibrate.addEventListener('click', () => { currentTool = 'calibrate'; toolPoints = []; resetToolButtons(); btnToolCalibrate.classList.add('active'); btnToolCalibrate.style.background='var(--primary)'; });
+if(btnToolMeasure) btnToolMeasure.addEventListener('click', () => { currentTool = 'measure'; toolPoints = []; resetToolButtons(); btnToolMeasure.classList.add('active'); btnToolMeasure.style.background='var(--primary)'; });
+if(btnToolClear) btnToolClear.addEventListener('click', () => { customAnnotations = []; toolPoints = []; if (!isPlaying) processVideoFrame().catch(console.error); });
+
+canvas.addEventListener('mousedown', (e) => {
+    if (currentTool === 'none') return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
+    toolPoints.push({x, y});
+    
+    if (currentTool === 'angle' && toolPoints.length === 3) {
+        customAnnotations.push({ type: 'angle', points: [...toolPoints] });
+        toolPoints = [];
+    } else if (currentTool === 'plumb' && toolPoints.length === 1) {
+        customAnnotations.push({ type: 'plumb', points: [...toolPoints] });
+        toolPoints = [];
+    } else if (currentTool === 'calibrate' && toolPoints.length === 2) {
+        let p1 = toolPoints[0], p2 = toolPoints[1];
+        let dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        let realStr = prompt("隢撓?仿??⊥迤蝺?撖阡??瑕漲 (?桐?嚗撠?", "1.0");
+        if (realStr && !isNaN(parseFloat(realStr)) && parseFloat(realStr) > 0) {
+            let realMeters = parseFloat(realStr);
+            pixelsPerMeter = dist / realMeters;
+            customAnnotations.push({ type: 'calibrate', points: [...toolPoints], text: `${realMeters}m` });
+        }
+        toolPoints = [];
+        currentTool = 'none';
+        resetToolButtons();
+        if(btnToolNone) { btnToolNone.classList.add('active'); btnToolNone.style.background=''; }
+    } else if (currentTool === 'measure' && toolPoints.length === 2) {
+        let p1 = toolPoints[0], p2 = toolPoints[1];
+        let dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        let text = pixelsPerMeter ? `${(dist / pixelsPerMeter).toFixed(2)}m` : `?芣甇?(${dist.toFixed(3)})`;
+        customAnnotations.push({ type: 'measure', points: [...toolPoints], text: text });
+        toolPoints = [];
+    }
+    
+    if (!isPlaying) processVideoFrame().catch(console.error); // Redraw
+});
+
+function drawCustomAnnotations(ctx) {
+    ctx.save();
+    // Draw committed annotations
+    customAnnotations.forEach(ann => {
+        if (ann.type === 'angle') {
+            const [p1, p2, p3] = ann.points;
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
+            ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+            ctx.lineTo(p3.x * canvas.width, p3.y * canvas.height);
+            ctx.stroke();
+            
+            const radians = Math.atan2(p3.y - p2.y, p3.x - p2.x) - Math.atan2(p1.y - p2.y, p1.x - p2.x);
+            let angle = Math.abs(radians * 180.0 / Math.PI);
+            if (angle > 180.0) angle = 360 - angle;
+            
+            ctx.fillStyle = '#F59E0B';
+            ctx.font = 'bold 16px Inter';
+            ctx.fillText(angle.toFixed(1) + '簞', p2.x * canvas.width + 10, p2.y * canvas.height - 10);
+        } else if (ann.type === 'plumb') {
+            const p = ann.points[0];
+            ctx.strokeStyle = '#10B981';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(p.x * canvas.width, 0);
+            ctx.lineTo(p.x * canvas.width, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        } else if (ann.type === 'calibrate' || ann.type === 'measure') {
+            const [p1, p2] = ann.points;
+            ctx.strokeStyle = ann.type === 'calibrate' ? '#3B82F6' : '#EC4899';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
+            ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+            ctx.stroke();
+            
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.font = 'bold 16px Inter';
+            const midX = ((p1.x + p2.x) / 2) * canvas.width;
+            const midY = ((p1.y + p2.y) / 2) * canvas.height - 10;
+            ctx.fillText(ann.text, midX, midY);
+        }
+    });
+    
+    // Draw in-progress points
+    if (toolPoints.length > 0) {
+        ctx.fillStyle = '#F59E0B';
+        toolPoints.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2*Math.PI);
+            ctx.fill();
+        });
+        if (currentTool === 'angle' && toolPoints.length === 2) {
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(toolPoints[0].x * canvas.width, toolPoints[0].y * canvas.height);
+            ctx.lineTo(toolPoints[1].x * canvas.width, toolPoints[1].y * canvas.height);
+            ctx.stroke();
+        } else if ((currentTool === 'calibrate' || currentTool === 'measure') && toolPoints.length === 1) {
+            ctx.strokeStyle = currentTool === 'calibrate' ? '#3B82F6' : '#EC4899';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            // Draw crosshair or just dot is fine
+            ctx.setLineDash([]);
+        }
+    }
+    ctx.restore();
+}
+
+</script>
+</body>
+
+</html>
